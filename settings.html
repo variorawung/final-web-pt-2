@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Pengaturan - InfoPoinUnklab</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+</head>
+<body onload="loadSettings()">
+  <div class="header" data-aos="fade-down">
+    <div class="header-left">
+      <img src="logounklab.png" alt="UNKLAB Logo" class="logo">
+      <h3>INFO POINT UNKLAB</h3>
+    </div>
+  </div>
+
+  <div class="container" data-aos="fade-up" data-aos-delay="80">
+    <h2>Pengaturan</h2>
+
+    <div class="form-group" data-aos="fade-up" data-aos-delay="100">
+      <label>Theme</label>
+      <select id="theme-select">
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+      </select>
+    </div>
+
+    <div class="form-group" data-aos="fade-up" data-aos-delay="120">
+      <label>Aksi Akun</label>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-delete" style="background:#d9534f; color:white;" onclick="clearLocal()">Reset Data Demo</button>
+        <button class="btn" onclick="logout()">Logout</button>
+      </div>
+    </div>
+
+    <a class="btn" href="dashboard.html" style="margin-top:12px;" data-aos="fade-up" data-aos-delay="140">Kembali</a>
+  </div>
+
+  <script src="app.js"></script>
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script>
+    AOS.init({ once: true, duration: 700, easing: 'ease-out-cubic' });
+    function loadSettings(){
+      const user = getCurrentUser(); if (!user) return window.location.href = 'index.html';
+      document.getElementById('theme-select').value = localStorage.getItem('theme') || 'light';
+      applyTheme(document.getElementById('theme-select').value);
+      document.getElementById('theme-select').addEventListener('change', e => { localStorage.setItem('theme', e.target.value); applyTheme(e.target.value); });
+    }
+    function applyTheme(theme){ if (theme === 'dark') document.body.classList.add('theme-dark'); else document.body.classList.remove('theme-dark'); }
+    function clearLocal(){ if (!confirm('Hapus semua data demo dari localStorage?')) return; localStorage.clear(); alert('Local data dihapus. Memuat ulang.'); location.reload(); }
+    function logout(){ localStorage.removeItem('current_user'); window.location.href='index.html'; }
+  </script>
+</body>
+</html>

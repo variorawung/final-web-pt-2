@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daftar Keluhan - Admin Panel</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/6d5d80ba30.js" crossorigin="anonymous"></script>
+
+</head>
+<body onload="loadKeluhanPage()">
+
+
+    <div class="header" data-aos="fade-down" data-aos-delay="40">
+        <div class="header-left">
+        <img src="logounklab.png" alt="UNKLAB Logo" class="logo">
+        <h3>INFO POINT UNKLAB</h3>
+        </div>
+        <div class="profil">
+            <div style="text-align:right;">
+                <div style="font-size:12px; color:var(--muted); margin-bottom:4px; font-family: 'poppins', sans-serif;">Selamat Datang:</div>
+                <span id="nama-user" style="font-family: 'poppins', sans-serif;">Nama Mahasiswa</span>
+            </div>
+            <span id="site-inbox-badge" style="display:inline-block; margin-left:8px; background:#ff3b30; color:#fff; padding:2px 8px; border-radius:12px; font-size:12px; vertical-align:middle;">0</span>
+            <button class="btn-logout" onclick="handleLogout()">Logout</button>
+        </div>
+    </div>
+
+    <div class="dashboard-layout">
+        
+        <div class="sidebar" data-aos="fade-right" data-aos-delay="80">
+            <h4>Menu Admin</h4>
+            <a href="admin.html" class="sidebar-link">Input Poin Mahasiswa</a>
+            <a href="keluhan.html" class="sidebar-link active">Daftar Keluhan</a>
+        </div>
+
+        <div class="main-content" data-aos="fade-left" data-aos-delay="80">
+            <div class="container" data-aos="fade-up" data-aos-delay="100">
+                <h2>Daftar Keluhan Mahasiswa</h2>
+                <div id="keluhan-list-container" data-aos="fade-up" data-aos-delay="140">
+                    </div>
+            </div>
+        </div>
+    </div> 
+</div>
+
+<footer class="footer" data-aos="fade-up" data-aos-delay="180">
+    <div class="footer-content">
+        <div class="footer-section">
+            <h4>INFORMASI</h4>
+            <div class="footer-contact">
+                <p><i class="fa-solid fa-location-dot"></i> Jl. Arnold Mononutu, Airmadidi, Minahasa Utara, Sulawesi Utara, 95371</p>
+                <p><i class="fa-solid fa-phone"></i> +62431 891035</p>
+                <p><i class="fa-solid fa-address-book"></i> info@unklab.ac.id</p>
+            </div>
+        </div>
+        
+        <div class="footer-section">
+            <h4>MEDIA SOSIAL</h4>
+            <div class="footer-social">
+                <a href="https://facebook.com/unklabofficial" class="social-icon">
+                <i class="fa-brands fa-facebook"></i> UNKLAB-Official
+                </a>
+                <a href="https://www.instagram.com/unklabofficial/" class="social-icon">
+                <i class="fa-brands fa-instagram"></i>unklabofficial    
+                </a>
+            </div>
+        </div>
+        
+        <div class="footer-section">
+            <h4>WEBSITE</h4>
+            <div class="footer-social">
+            <a href="https://www.unklab.ac.id/" class="social-icon">
+            <i class="fa-solid fa-link"></i> www.unklab.ac.id
+            </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer-bottom">
+        <p>&copy; 2025 Info Point UNKLAB - Wakil Rektor 3 bidang kemahasiswaan Universitas Klabat</p>
+    </div>
+</footer>
+    
+    <script src="app.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+    AOS.init({ once: true, duration: 700, easing: 'ease-out-cubic' });
+    </script>
+    <script>
+        // Fungsi saat halaman ini dimuat
+        function loadKeluhanPage() {
+            const user = getCurrentUser();
+            // Jika bukan admin, tendang ke index
+            if (!user || user.role !== 'admin') {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Set nama admin di header
+            document.getElementById('nama-user').textContent = user.nama;
+
+            // Muat daftar keluhan
+            loadDaftarKeluhan();
+        }
+
+       // LOAD DAFTAR KELUHAN DENGAN CHAT-STYLE CONVERSATION VIEW
+function loadDaftarKeluhan() {
+    const allKeluhan = JSON.parse(localStorage.getItem('log_keluhan') || '[]');
+    const container = document.getElementById('keluhan-list-container');
+    container.innerHTML = '';
+
+    if (allKeluhan.length === 0) {
+        container.innerHTML = '<p>Belum ada keluhan yang masuk.</p>';
+        return;
+    }
+
+    // Group keluhan by nimdan tampilkan satu card per mahasiswa (per nim)
+    // hanya tampilkan keluhan terakhir per nim
+    const keluhanByNim = {};
+    allKeluhan.forEach(k => {
+        if (!keluhanByNim[k.nim] || new Date(k.tanggal) > new Date(keluhanByNim[k.nim].tanggal)) {
+            keluhanByNim[k.nim] = k;
+        }
+    });
+
+    // Convert ke array dan urutkan terbaru di atas
+    const keluhanList = Object.values(keluhanByNim).sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+
+    keluhanList.forEach(k => {
+        // Cek bukti
+        let buktiHtml = '';
+        if (k.bukti) {
+            buktiHtml = `<div class="keluhan-bukti"><strong>Bukti:</strong> <span>${k.bukti}</span></div>`;
+        }
+
+        // Chat-style: tampilkan keluhan sebagai pesan dari mahasiswa
+        let chatHtml = `
+            <div style="margin-bottom:12px; padding:10px; background:#e7f3ff; border-radius:8px; border-left:4px solid #0066cc;">
+                <div style="font-size:12px; color:#666; margin-bottom:4px;"><strong>${k.nama}</strong> (${k.nim})</div>
+                <div style="white-space:pre-wrap; word-wrap:break-word;">${k.keluhan}</div>
+                ${buktiHtml}
+                <div style="font-size:11px; color:#999; margin-top:6px;">${k.tanggal}</div>
+            </div>
+        `;
+
+        // Tampilkan semua replies sebagai balasan dari admin (chat bubbles)
+        if (k.replies && k.replies.length) {
+            k.replies.forEach((r, ridx) => {
+                chatHtml += `
+                    <div style="margin-bottom:12px; padding:10px; background:#f0f0f0; border-radius:8px; border-left:4px solid #666; margin-left:20px;">
+                        <div style="font-size:12px; color:#666; margin-bottom:4px;"><strong>${r.responder}</strong></div>
+                        <div style="white-space:pre-wrap; word-wrap:break-word;">${r.text}</div>
+                        <div style="font-size:11px; color:#999; margin-top:6px;">${r.tanggal}</div>
+                        <button class="btn-delete" onclick="klikHapusReply(${k.id_keluhan}, ${ridx})" style="margin-top:6px; font-size:11px; padding:4px 8px;">Hapus Balasan</button>
+                    </div>
+                `;
+            });
+        }
+
+        // Form balas (hanya tampilkan jika ada atau jika belum ada replies)
+        const replyFormHtml = `
+            <div style="margin-top:12px; padding:10px; background:#fffbf0; border:1px solid #ddd; border-radius:8px;">
+                <textarea id="reply-${k.id_keluhan}" rows="2" placeholder="Tulis balasan.." style="width:100%; padding:8px; box-sizing:border-box; border:1px solid #ccc; border-radius:4px;"></textarea>
+                <div style="margin-top:6px; display:flex; gap:8px; align-items:center;">
+                    <button class="btn" onclick="klikReplyKeluhan(${k.id_keluhan})" style="padding:8px 16px; font-size:13px;">Kirim Balasan</button>
+                    <small style="color:var(--muted);">Balasan akan langsung sampai ke mahasiswa</small>
+                </div>
+            </div>
+        `;
+
+        // Main card
+        container.innerHTML += `
+            <div class="keluhan-item" style="padding:15px; border:1px solid #ddd; border-radius:8px; margin-bottom:15px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding-bottom:8px; border-bottom:2px solid #eee;">
+                    <h3 style="margin:0; font-size:16px;">${k.nama} (${k.nim})</h3>
+                    <div>
+                        <span style="background:${k.status === 'Ditanggapi' ? '#28a745' : '#ffc107'}; color:#fff; padding:4px 10px; border-radius:12px; font-size:12px; margin-right:8px;">
+                            ${k.status || 'Baru'}
+                        </span>
+                        <button class="btn-delete" onclick="klikHapusKeluhan(${k.id_keluhan})" style="font-size:12px; padding:4px 8px;">Hapus Thread</button>
+                    </div>
+                </div>
+                
+                <div style="background:#fafafa; padding:12px; border-radius:6px; max-height:400px; overflow-y:auto; margin-bottom:12px;">
+                    ${chatHtml}
+                </div>
+                
+                ${replyFormHtml}
+            </div>
+        `;
+    });
+}
+
+        // --- FUNGSI BARU ---
+        // Jembatan untuk menghapus KELUHAN DAN me-refresh daftar
+        function klikHapusKeluhan(keluhan_id) {
+            // Panggil fungsi global dari app.js
+            const sukses = handleDeleteKeluhan(keluhan_id);
+            
+            // Jika sukses menghapus (tidak di-cancel)
+            if (sukses) {
+                // Muat ulang daftar keluhan di halaman ini
+                loadDaftarKeluhan();
+            }
+        }
+
+        // Klik balas: ambil teks dari textarea lalu panggil handler global
+        function klikReplyKeluhan(keluhan_id) {
+            const el = document.getElementById(`reply-${keluhan_id}`);
+            if (!el) return alert('Elemen balasan tidak ditemukan.');
+            const text = el.value.trim();
+            if (!text) return alert('Tulis balasan terlebih dahulu.');
+
+            // panggil fungsi di app.js yang menangani pengiriman balasan
+            if (typeof handleReplyKeluhan === 'function') {
+                const hasil = handleReplyKeluhan(keluhan_id, text);
+                // jika fungsi sinkron, muat ulang daftar; jika promise, tunggu
+                if (hasil && typeof hasil.then === 'function') {
+                    hasil.then(() => loadDaftarKeluhan());
+                } else {
+                    loadDaftarKeluhan();
+                }
+            } else {
+                alert('Fungsi reply belum tersedia.');
+            }
+        }
+
+        // Hapus reply dari keluhan
+        function klikHapusReply(keluhan_id, reply_index) {
+            if (!confirm('Hapus balasan ini?')) return;
+            if (typeof deleteReply === 'function') {
+                const sukses = deleteReply(keluhan_id, reply_index);
+                if (sukses) {
+                    loadDaftarKeluhan();
+                } else {
+                    alert('Gagal menghapus balasan.');
+                }
+            } else {
+                alert('Fungsi hapus balasan belum tersedia.');
+            }
+        }
+    </script>
+<script>
+// Update site-wide inbox badge for students
+(function(){
+    const badge = document.getElementById('site-inbox-badge');
+    if (!badge) return;
+    function refresh(){
+        try{
+            const user = getCurrentUser && getCurrentUser();
+            if (!user || user.role !== 'mahasiswa') { badge.style.display = 'none'; return; }
+            if (typeof getUnreadCount === 'function') badge.textContent = getUnreadCount();
+        }catch(e){/* ignore */}
+    }
+    refresh();
+    setInterval(refresh, 5000);
+    try { if (typeof startInboxWatcher === 'function') startInboxWatcher(5000); } catch(e){}
+})();
+</script>
+</body>
+</html>
+</body>
+</html>

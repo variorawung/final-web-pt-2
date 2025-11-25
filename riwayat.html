@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Riwayat Poin - InfoPoinUnklab</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://kit.fontawesome.com/6d5d80ba30.js" crossorigin="anonymous"></script>
+  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+</head>
+<body onload="loadRiwayat()">
+  <div class="header" data-aos="fade-down">
+    <div class="header-left">
+      <img src="logounklab.png" alt="UNKLAB Logo" class="logo">
+      <h3>INFO POINT UNKLAB</h3>
+    </div>
+    <div class="profil">
+      <div style="text-align:right;">
+        <div style="font-size:12px; color:var(--muted); margin-bottom:4px;">Selamat Datang:</div>
+        <span id="nama-user">Nama</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="container" data-aos="fade-up" data-aos-delay="80">
+    <h2>Riwayat Poin</h2>
+
+    <div class="form-group" data-aos="fade-up" data-aos-delay="100">
+      <label>Filter Kategori</label>
+      <select id="filter-kategori">
+        <option value="all">Semua</option>
+        <option value="sabat">Sabat</option>
+        <option value="midweek">Mid Week</option>
+        <option value="vesper">Vesper</option>
+        <option value="pelanggaran">Pelanggaran</option>
+      </select>
+    </div>
+
+    <div id="riwayat-list" data-aos="fade-up" data-aos-delay="120"></div>
+
+    <a class="btn" href="dashboard.html" style="margin-top:12px;" data-aos="fade-up" data-aos-delay="140">Kembali</a>
+  </div>
+
+  <script src="app.js"></script>
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script>
+    AOS.init({ once: true, duration: 700, easing: 'ease-out-cubic' });
+
+    function detectCategory(text) {
+      if (!text) return 'other';
+      const s = text.toLowerCase();
+      if (s.includes('sabat')) return 'sabat';
+      if (s.includes('mid') || s.includes('mid-week') || s.includes('mid week')) return 'midweek';
+      if (s.includes('vesper')) return 'vesper';
+      return 'pelanggaran';
+    }
+
+    function loadRiwayat(){
+      const user = getCurrentUser(); if (!user) return window.location.href='index.html';
+      document.getElementById('nama-user').textContent = user.nama;
+      const logs = getLogsForUser(user.nim) || [];
+      renderList(logs);
+
+      const sel = document.getElementById('filter-kategori');
+      sel.addEventListener('change', () => {
+        const value = sel.value;
+        let filtered = logs;
+        if (value !== 'all') {
+          filtered = logs.filter(l => detectCategory(l.keterangan || '') === value || detectCategory(l.keterangan || '') === 'pelanggaran' && value === 'pelanggaran');
+        }
+        renderList(filtered);
+      });
+
+      const b = document.getElementById('site-inbox-badge'); if (b) b.textContent = getUnreadCount();
+    }
+
+    function renderList(list){
+      const container = document.getElementById('riwayat-list'); container.innerHTML = '';
+      if (!list || list.length === 0) { container.innerHTML = '<p style="color:var(--muted);">Belum ada riwayat.</p>'; return; }
+
+      list.slice().reverse().forEach(l => {
+        const p = (getMasterPelanggaran()||[]).find(m=>m.id===l.id_pelanggaran) || { nama: 'Unknown', poin: 0 };
+        const el = document.createElement('div');
+        el.className = 'riwayat-item';
+        el.setAttribute('data-aos', 'fade-up');
+        el.setAttribute('data-aos-delay', '60');
+        el.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:flex-start;"><div><strong>${p.nama}</strong><div class="detail">${l.tanggal} - ${l.keterangan || ''}</div></div><strong class="poin-merah">+${p.poin} Poin</strong></div>`;
+        container.appendChild(el);
+      });
+    }
+  </script>
+</body>
+</html>

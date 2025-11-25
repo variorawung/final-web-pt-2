@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Leaderboard - InfoPoinUnklab</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://kit.fontawesome.com/6d5d80ba30.js" crossorigin="anonymous"></script>
+  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+</head>
+<body onload="loadLeaderboard()">
+  <div class="header" data-aos="fade-down">
+    <div class="header-left">
+      <img src="logounklab.png" alt="UNKLAB Logo" class="logo">
+      <h3>INFO POINT UNKLAB</h3>
+    </div>
+    <div class="profil">
+      <div style="text-align:right;">
+        <div style="font-size:12px; color:var(--muted); margin-bottom:4px;">Selamat Datang:</div>
+        <span id="nama-user">Nama</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="container" data-aos="fade-up" data-aos-delay="80">
+    <h2>Leaderboard Poin</h2>
+    <div id="leaderboard-table" data-aos="fade-up" data-aos-delay="120"></div>
+    <a class="btn" href="dashboard.html" style="margin-top:12px;" data-aos="fade-up" data-aos-delay="140">Kembali ke Dashboard</a>
+  </div>
+
+  <script src="app.js"></script>
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script>
+    AOS.init({ once: true, duration: 700, easing: 'ease-out-cubic' });
+    function loadLeaderboard(){
+      const user = getCurrentUser();
+      if (!user) return window.location.href='index.html';
+      document.getElementById('nama-user').textContent = user.nama;
+      const list = getLeaderboard(50);
+      const container = document.getElementById('leaderboard-table');
+      container.innerHTML = '<table class="table" style="width:100%;border-collapse:collapse;"><thead><tr><th style="width:40px;">#</th><th>Nama</th><th>NIM</th><th style="text-align:right;">Poin</th></tr></thead><tbody></tbody></table>';
+      const tbody = container.querySelector('tbody');
+      list.forEach((r, i) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td style="text-align:center">${i+1}</td><td>${r.nama}</td><td>${r.nim}</td><td style="text-align:right">${r.totalPoin}</td>`;
+        if (r.nim === user.nim) tr.style.background = 'linear-gradient(90deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02))';
+        tbody.appendChild(tr);
+      });
+
+      // badge
+      const b = document.getElementById('site-inbox-badge'); if (b) b.textContent = getUnreadCount();
+    }
+  </script>
+</body>
+</html>

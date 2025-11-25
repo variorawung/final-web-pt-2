@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Mahasiswa - InfoPoinUnklab</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/6d5d80ba30.js" crossorigin="anonymous"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+</head>
+<body onload="loadDashboard()">
+
+<div data-aos="fade-down">
+    <div class="header">
+        <div class="header-left">
+        <img src="logounklab.png" alt="UNKLAB Logo" class="logo">
+        <h3>INFO POINT UNKLAB</h3>
+        </div>
+        <div class="profil">
+            <div style="text-align:right;">
+                <div style="font-size:12px; color:var(--muted); margin-bottom:4px; font-family: 'poppins', sans-serif;">Selamat Datang:</div>
+                <span id="nama-user" style="font-family: 'poppins', sans-serif;">Nama Mahasiswa</span>
+            </div>
+            <span id="site-inbox-badge" style="display:inline-block; margin-left:8px; background:#ff3b30; color:#fff; padding:2px 8px; border-radius:12px; font-size:12px; vertical-align:middle;">0</span>
+            <button class="btn-logout" onclick="handleLogout()">Logout</button>
+        </div>
+    </div>
+</div>
+
+    <div class="dashboard-layout">
+        <div class="sidebar">
+            <div data-aos="fade-right">
+                <h4 style="text-align: center;">Navigasi Mahasiswa</h4>
+
+                <!-- Quick navigation / primary -->
+                <nav aria-label="Navigasi Utama">
+                    <a href="dashboard.html" class="sidebar-link active"><i class="fa-solid fa-gauge"></i> Dashboard Point</a>
+                    <a href="profile.html" class="sidebar-link"><i class="fa-solid fa-user"></i> Profil</a>
+                    <a href="leaderboard.html" class="sidebar-link"><i class="fa-solid fa-trophy"></i> Leaderboard</a>
+                    <a href="inbox.html" class="sidebar-link" id="sidebar-inbox-link" aria-label="Inbox"><i class="fa-solid fa-inbox"></i> Inbox <span id="sidebar-inbox-badge" style="display:inline-block; margin-left:8px; background:#ff3b30; color:#fff; padding:2px 8px; border-radius:12px; font-size:12px; vertical-align:middle; font-weight:700; display:none">0</span></a>
+                    <a href="riwayat.html" class="sidebar-link"><i class="fa-solid fa-history"></i> Riwayat Poin</a>
+                    <a href="settings.html" class="sidebar-link"><i class="fa-solid fa-gear"></i> Pengaturan</a>
+                    <a href="help.html" class="sidebar-link"><i class="fa-solid fa-circle-question"></i> Bantuan</a>
+                </nav>
+
+                <hr class="sidebar-divider">
+
+                <h4 style="text-align: center;">Hubungi Admin</h4>
+                <div class="form-group">
+                    <label for="keluhan-text">Kirim Keluhan:</label>
+                    <textarea id="keluhan-text" rows="5" placeholder="Tulis keluhan atau pertanyaan Anda di sini..."></textarea>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="keluhan-bukti">Sertakan Bukti (Opsional):</label>
+                <input type="file" id="keluhan-bukti" class="input-file" accept="image/*">
+            </div>
+            <button class="btn btn-sukses" style="width: 100%;" onclick="handleSimpanKeluhan()">Kirim</button>
+            <p id="keluhan-success" class="success" style="font-size: 14px;"></p>
+        </div>
+
+        <div class="main-content" style="font-family: 'Poppins', sans-serif;" data-aos="fade-left" data-aos-delay="80">
+            <div class="container" data-aos="fade-up" data-aos-delay="100">
+                <h2>Dashboard Anda</h2>
+
+                <div id="status-box" class="status-box" data-aos="fade-up" data-aos-delay="140">
+                    <p>Total Poin Pelanggaran Anda</p>
+                    <h1 id="total-poin">0</h1>
+                </div>
+
+                <div class="riwayat-box" data-aos="fade-up" data-aos-delay="180">
+                    <h3>Aktivitas Poin Terbaru</h3>
+                    <div id="riwayat-list" data-aos="fade-up" data-aos-delay="220"></div>
+                </div>
+
+                <div class="riwayat-box" style="margin-top:18px;" data-aos="fade-up" data-aos-delay="240">
+                    <h3>Balasan Terbaru dari Admin</h3>
+                    <div id="dashboard-inbox" data-aos="fade-up" data-aos-delay="260">
+                        <p style="color:var(--muted);">Memuat pesan...</p>
+                    </div>
+                    <div style="margin-top:8px;">
+                        <a href="inbox.html" class="btn">Lihat Semua</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+    AOS.init({ once: true, duration: 700, easing: 'ease-out-cubic' });
+    </script>
+    <script>
+    // Main dashboard logic (called on body onload)
+    function loadDashboard() {
+        const user = getCurrentUser();
+        if (!user || user.role !== 'mahasiswa') {
+            window.location.href = 'index.html';
+            return;
+        }
+
+        const nameEl = document.getElementById('nama-user');
+        if (nameEl) nameEl.textContent = user.nama;
+
+        const allLogs = JSON.parse(localStorage.getItem('log_pelanggaran') || '[]');
+        const masterPelanggaran = JSON.parse(localStorage.getItem('master_pelanggaran') || '[]');
+        const userLogs = allLogs.filter(log => log.nim === user.nim);
+
+        let totalPoin = 0;
+        const riwayatContainer = document.getElementById('riwayat-list');
+        if (riwayatContainer) riwayatContainer.innerHTML = '';
+
+        if (userLogs.length === 0) {
+            if (riwayatContainer) riwayatContainer.innerHTML = '<p>Banyak selamat karena belum ada pelanggaran.</p>';
+        }
+
+        userLogs.forEach(log => {
+            const pelanggaran = masterPelanggaran.find(p => p.id === log.id_pelanggaran) || { nama: 'Unknown', poin: 0 };
+            totalPoin += pelanggaran.poin || 0;
+            if (riwayatContainer) {
+                const item = document.createElement('div');
+                item.className = 'riwayat-item';
+                item.innerHTML = `
+                    <div>
+                        <strong>${pelanggaran.nama}</strong>
+                        <div class="detail">${log.tanggal} - ${log.keterangan || ''}</div>
+                    </div>
+                    <strong class="poin-merah">+${pelanggaran.poin || 0} Poin</strong>
+                `;
+                riwayatContainer.appendChild(item);
+            }
+        });
+
+        const totalEl = document.getElementById('total-poin');
+        if (totalEl) totalEl.textContent = totalPoin;
+
+        // ensure status-poin exists
+        const statusBox = document.getElementById('status-box');
+        let statusPoin = document.getElementById('status-poin');
+        if (!statusPoin && statusBox) {
+            statusPoin = document.createElement('div');
+            statusPoin.id = 'status-poin';
+            statusPoin.style.marginTop = '8px';
+            statusBox.appendChild(statusPoin);
+        }
+
+        if (statusPoin) {
+            if (totalPoin >= 50) {
+                statusPoin.textContent = 'PEMBINAAN';
+                if (statusBox) statusBox.className = 'status-box status-merah';
+            } else if (totalPoin >= 21) {
+                statusPoin.textContent = 'PERINGATAN';
+                if (statusBox) statusBox.className = 'status-box status-kuning';
+            } else {
+                statusPoin.textContent = 'AMAN';
+                if (statusBox) statusBox.className = 'status-box status-hijau';
+            }
+        }
+
+        // update badge
+        try { if (typeof getUnreadCount === 'function') {
+            const b = document.getElementById('site-inbox-badge'); if (b) b.textContent = getUnreadCount();
+        }} catch(e) {}
+    }
+
+    // Compact inbox preview and watcher start
+    (function(){
+        function renderDashboardInbox(){
+            const container = document.getElementById('dashboard-inbox');
+            if (!container) return;
+            const inbox = (typeof getInbox === 'function') ? getInbox() : [];
+            container.innerHTML = '';
+            if (!inbox || inbox.length === 0) {
+                const p = document.createElement('p');
+                p.style.color = 'var(--muted)';
+                p.textContent = 'Belum ada balasan dari admin.';
+                container.appendChild(p);
+                return;
+            }
+
+            const latest = [];
+            for (let i = inbox.length - 1; i >= 0 && latest.length < 3; i--) {
+                latest.push({ msg: inbox[i], idx: i });
+            }
+
+            latest.forEach(item => {
+                const m = item.msg;
+                const card = document.createElement('div');
+                card.style.border = '1px solid #eee';
+                card.style.padding = '10px';
+                card.style.borderRadius = '8px';
+                card.style.marginBottom = '8px';
+                card.style.background = m.read ? '#fff' : '#f8fbff';
+
+                const head = document.createElement('div');
+                head.style.display = 'flex';
+                head.style.justifyContent = 'space-between';
+                head.style.alignItems = 'center';
+
+                const title = document.createElement('strong');
+                title.textContent = m.from + (m.read ? '' : ' (baru)');
+                const time = document.createElement('small');
+                time.style.color = '#666';
+                time.textContent = m.tanggal;
+                head.appendChild(title);
+                head.appendChild(time);
+
+                const body = document.createElement('div');
+                body.style.marginTop = '8px';
+                body.style.whiteSpace = 'nowrap';
+                body.style.overflow = 'hidden';
+                body.style.textOverflow = 'ellipsis';
+                body.textContent = m.text;
+
+                const actions = document.createElement('div');
+                actions.style.marginTop = '8px';
+
+                if (!m.read) {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn';
+                    btn.textContent = 'Tandai Terbaca';
+                    btn.addEventListener('click', function(){
+                        if (typeof markInboxMessageRead === 'function') {
+                            markInboxMessageRead(item.idx);
+                            try{ if (typeof getUnreadCount === 'function') {
+                                const b = document.getElementById('site-inbox-badge'); if (b) b.textContent = getUnreadCount();
+                            }}catch(e){}
+                            renderDashboardInbox();
+                        }
+                    });
+                    actions.appendChild(btn);
+                }
+
+                card.appendChild(head);
+                card.appendChild(body);
+                card.appendChild(actions);
+                container.appendChild(card);
+            });
+        }
+
+        renderDashboardInbox();
+        setInterval(renderDashboardInbox, 5000);
+        try { if (typeof startInboxWatcher === 'function') startInboxWatcher(5000); } catch(e){}
+    })();
+
+  (function() {
+    // Set active nav link based on the current path
+    function setActiveNav() {
+      const links = document.querySelectorAll('.sidebar-link');
+      const current = window.location.pathname.split('/').pop() || 'dashboard.html';
+      links.forEach(a => {
+        const href = (a.getAttribute('href') || '').split('/').pop();
+        if (href === current) {
+          a.classList.add('active');
+        } else {
+          a.classList.remove('active');
+        }
+      });
+    }
+
+    // Update sidebar inbox badge from getUnreadCount() if available
+    function updateSidebarBadge() {
+      try {
+        const count = (typeof getUnreadCount === 'function') ? getUnreadCount() : 0;
+        const badge = document.getElementById('sidebar-inbox-badge');
+        if (!badge) return;
+        if (count > 0) {
+          badge.textContent = count;
+          badge.style.display = 'inline-block';
+        } else {
+          badge.style.display = 'none';
+        }
+      } catch(e) {
+        // ignore errors
+      }
+    }
+
+    // initial
+    setActiveNav();
+    updateSidebarBadge();
+
+    // monitor changes every 5s and also when unread changes
+    setInterval(updateSidebarBadge, 5000);
+
+    // Also set active on click for SPA-like feedback
+    document.querySelectorAll('.sidebar-link').forEach(link => {
+      link.addEventListener('click', function() {
+        document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
+
+    // Exports for debugging if needed
+    window._setActiveNav = setActiveNav;
+    window._updateSidebarBadge = updateSidebarBadge;
+  })();
+    </script>
+
+
+<div data-aos="fade-up" data-aos-delay="50">
+<footer class="footer">
+    <div class="footer-content">
+        <div class="footer-section">
+            <h4>INFORMASI</h4>
+            <div class="footer-contact">
+                <p><i class="fa-solid fa-location-dot"></i> Jl. Arnold Mononutu, Airmadidi, Minahasa Utara, Sulawesi Utara, 95371</p>
+                <p><i class="fa-solid fa-phone"></i> +62431 891035</p>
+                <p><i class="fa-solid fa-address-book"></i> info@unklab.ac.id</p>
+            </div>
+        </div>
+        
+        <div class="footer-section">
+            <h4>MEDIA SOSIAL</h4>
+            <div class="footer-social">
+                <a href="https://facebook.com/unklabofficial" class="social-icon">
+                <i class="fa-brands fa-facebook"></i> UNKLAB-Official
+                </a>
+                <a href="https://www.instagram.com/unklabofficial/" class="social-icon">
+                <i class="fa-brands fa-instagram"></i>unklabofficial    
+                </a>
+            </div>
+        </div>
+        
+        <div class="footer-section">
+            <h4>WEBSITE</h4>
+            <div class="footer-social">
+            <a href="https://www.unklab.ac.id/" class="social-icon">
+            <i class="fa-solid fa-link"></i> www.unklab.ac.id
+            </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer-bottom">
+        <p>&copy; 2025 Info Point UNKLAB - Wakil Rektor 3 bidang kemahasiswaan Universitas Klabat</p>
+    </div>
+</footer>
+</div>
+</body>
+</html>

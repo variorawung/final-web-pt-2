@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Input Poin - Admin Panel</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/6d5d80ba30.js" crossorigin="anonymous"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+</head>
+<body onload="loadAdminPage()">
+
+    <div class="header" data-aos="fade-down" data-aos-delay="40">
+        <div class="header-left">
+        <img src="logounklab.png" alt="UNKLAB Logo" class="logo">
+        <h3>INFO POINT UNKLAB</h3>
+        </div>
+        <div class="profil">
+            <div style="text-align:right;">
+                <div style="font-size:12px; color:var(--muted); margin-bottom:4px; font-family: 'poppins', sans-serif;">Selamat Datang:</div>
+                <span id="nama-user" style="font-family: 'poppins', sans-serif;">Nama Mahasiswa</span>
+            </div>
+            <span id="site-inbox-badge" style="display:inline-block; margin-left:8px; background:#ff3b30; color:#fff; padding:2px 8px; border-radius:12px; font-size:12px; vertical-align:middle;">0</span>
+            <button class="btn-logout" onclick="handleLogout()">Logout</button>
+        </div>
+    </div>
+
+    <div class="dashboard-layout">
+
+        <div class="sidebar" data-aos="fade-right" data-aos-delay="80">
+            <h4>Menu Admin</h4>
+            <nav aria-label="Navigasi Admin">
+                <a href="#section-input-poin" class="sidebar-link" data-target="#section-input-poin">Dashboard / Input Poin</a>
+                <a href="#section-users" class="sidebar-link" data-target="#section-users">Manajemen Pengguna</a>
+                <a href="#section-master" class="sidebar-link" data-target="#section-master">Master Jenis Poin</a>
+                <a href="#section-keluhan" class="sidebar-link" data-target="#section-keluhan">Manajemen Keluhan</a>
+                <a href="#section-reports" class="sidebar-link" data-target="#section-reports">Laporan</a>
+                <a href="#section-settings" class="sidebar-link" data-target="#section-settings">Pengaturan</a>
+                <button class="btn-logout sidebar-link" style="display:block; margin-top:8px;" onclick="handleLogout()">Logout</button>
+            </nav>
+        </div>
+
+        <div class="main-content" data-aos="fade-left" data-aos-delay="80">
+            <div class="container" data-aos="fade-up" data-aos-delay="100">
+                <h2 id="section-input-poin">Input Poin Pelanggaran Baru</h2>
+                <div class="admin-summary" data-aos="fade-up" data-aos-delay="120">
+                    <div class="admin-card" id="admin-stat-users"><h4>Total Users</h4><p id="stat-users">-</p></div>
+                    <div class="admin-card" id="admin-stat-keluhan"><h4>Total Keluhan</h4><p id="stat-keluhan">-</p></div>
+                    <div class="admin-card" id="admin-stat-poin"><h4>Total Poin Terinput</h4><p id="stat-poin">-</p></div>
+                </div>
+
+                <div class="form-group" data-aos="fade-right" data-aos-delay="140">
+                    <label for="nim-cari">Cari Mahasiswa (Ketik NIM)</label>
+                    <input type="text" id="nim-cari" placeholder="Contoh: 123456">
+                    <button class="btn" onclick="cariMahasiswa()">Cari</button>
+                </div>
+
+                <hr>
+
+                <div id="form-input-pelanggaran" class="hidden">
+                    
+                    <div class="profil-mhs" id="profil-mhs">
+                        </div>
+
+                    <div id="riwayat-admin-list-container">
+                        <h4>Riwayat Poin Saat Ini:</h4>
+                        <div id="riwayat-admin-list" data-aos="fade-up" data-aos-delay="200">
+                            </div>
+                    </div>
+
+                    <input type="hidden" id="nim-terpilih">
+
+                    <h4>Tambah Pelanggaran Baru:</h4>
+                    <div class="form-group" data-aos="fade-left" data-aos-delay="160">
+                        <label for="id_pelanggaran">Jenis Pelanggaran *</label>
+                        <select id="id_pelanggaran">
+                            </select>
+                    </div>
+                    
+                    <div class="form-group" data-aos="fade-right" data-aos-delay="180">
+                        <label for="tanggal">Tanggal Kejadian *</label>
+                        <input type="date" id="tanggal">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="keterangan">Keterangan Tambahan</label>
+                        <textarea id="keterangan" rows="3" placeholder="..."></textarea>
+                    </div>
+                    
+                    <p id="admin-success" class="success"></p>
+                    <p id="admin-error" class="error"></p>
+
+                    <button class="btn btn-sukses" onclick="simpanPelanggaran()">Simpan Pelanggaran</button>
+                </div>
+                <!-- ADMIN MANAGEMENT: Users & Master Pelanggaran -->
+                <hr>
+                <h3 id="section-users" data-aos="fade-up" data-aos-delay="220">Manajemen Pengguna</h3>
+                <div id="admin-users" data-aos="fade-up" data-aos-delay="240">
+                    <div style="display:flex; gap:12px; align-items:flex-end; margin-bottom:12px;">
+                        <div style="flex:1">
+                            <label>NIM</label>
+                            <input id="new-user-nim" />
+                        </div>
+                        <div style="flex:1">
+                            <label>Nama</label>
+                            <input id="new-user-nama" />
+                        </div>
+                        <div style="flex:1">
+                            <label>Role</label>
+                            <select id="new-user-role"><option value="mahasiswa">Mahasiswa</option><option value="admin">Admin</option></select>
+                        </div>
+                        <div style="flex:1">
+                            <label>Password</label>
+                            <input id="new-user-pass" type="password" />
+                        </div>
+                        <div><button class="btn btn-sukses" onclick="adminAddUser()">Tambah</button></div>
+                    </div>
+                    <div id="admin-users-table"></div>
+                </div>
+
+                <hr>
+                <h3 id="section-master" data-aos="fade-up" data-aos-delay="260">Manajemen Master Poin (Jenis)</h3>
+                <div id="admin-master" data-aos="fade-up" data-aos-delay="280">
+                    <div style="display:flex; gap:12px; align-items:flex-end; margin-bottom:12px;">
+                        <div style="flex:2">
+                            <label>Nama Jenis</label>
+                            <input id="new-jenis-nama" />
+                        </div>
+                        <div style="flex:1">
+                            <label>Poin</label>
+                            <input id="new-jenis-poin" type="number" />
+                        </div>
+                        <div><button class="btn btn-sukses" onclick="adminAddJenis()">Tambah</button></div>
+                    </div>
+                    <div id="admin-master-table"></div>
+                </div>
+                    <hr>
+                    <h3 id="section-keluhan" data-aos="fade-up" data-aos-delay="300">Manajemen Keluhan</h3>
+                    <div id="admin-keluhan" data-aos="fade-up" data-aos-delay="320"></div>
+                    <div id="admin-keluhan-list"></div>
+                    <hr>
+                    <div id="section-reports" style="margin-top:18px; padding-top:8px;">
+                        <h3>Laporan Ringkasan</h3>
+                        <div id="admin-reports" data-aos="fade-up" data-aos-delay="340"></div>
+                    </div>
+                        <hr>
+                        <div id="section-settings" style="margin-top:18px; padding-top:8px;">
+                            <h3>Pengaturan Admin</h3>
+                            <div style="display:flex; gap:8px;">
+                                <button class="btn" onclick="if(confirm('Reset semua data demo?')) { localStorage.clear(); location.reload(); }">Reset Data Demo</button>
+                                <button class="btn" onclick="handleLogout()">Logout</button>
+                            </div>
+                        </div>
+                    <div id="admin-keluhan-list"></div>
+            </div>
+        </div> 
+    </div>
+
+    <footer class="footer" data-aos="fade-up" data-aos-delay="240">
+    <div class="footer-content">
+        <div class="footer-section">
+            <h4>INFORMASI</h4>
+            <div class="footer-contact">
+                <p><i class="fa-solid fa-location-dot"></i> Jl. Arnold Mononutu, Airmadidi, Minahasa Utara, Sulawesi Utara, 95371</p>
+                <p><i class="fa-solid fa-phone"></i> +62431 891035</p>
+                <p><i class="fa-solid fa-address-book"></i> info@unklab.ac.id</p>
+            </div>
+        </div>
+        
+        <div class="footer-section">
+            <h4>MEDIA SOSIAL</h4>
+            <div class="footer-social">
+                <a href="https://facebook.com/unklabofficial" class="social-icon">
+                <i class="fa-brands fa-facebook"></i> UNKLAB-Official
+                </a>
+                <a href="https://www.instagram.com/unklabofficial/" class="social-icon">
+                <i class="fa-brands fa-instagram"></i>unklabofficial    
+                </a>
+            </div>
+        </div>
+        
+        <div class="footer-section">
+            <h4>WEBSITE</h4>
+            <div class="footer-social">
+            <a href="https://www.unklab.ac.id/" class="social-icon">
+            <i class="fa-solid fa-link"></i> www.unklab.ac.id
+            </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer-bottom">
+        <p>&copy; 2025 Info Point UNKLAB - Wakil Rektor 3 bidang kemahasiswaan Universitas Klabat</p>
+    </div>
+</footer>
+    
+    
+    <script src="app.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>AOS.init({ once: true, duration: 700, easing: 'ease-out-cubic' });</script>
+    <script>
+        // Fungsi saat halaman admin dimuat
+        function loadAdminPage() {
+            const user = getCurrentUser();
+            // Jika bukan admin, tendang ke index
+            if (!user || user.role !== 'admin') {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            document.getElementById('nama-user').textContent = user.nama;
+            document.getElementById('tanggal').valueAsDate = new Date(); // Set tanggal hari ini
+
+            // Isi dropdown pilihan pelanggaran
+            const masterPelanggaran = JSON.parse(localStorage.getItem('master_pelanggaran'));
+            const selectEl = document.getElementById('id_pelanggaran');
+            selectEl.innerHTML = '<option value="">-- Pilih Jenis Pelanggaran --</option>'; // Tambahkan opsi default
+            
+            masterPelanggaran.forEach(p => {
+                selectEl.innerHTML += `
+                    <option value="${p.id}">${p.nama} (+${p.poin} Poin)</option>
+                `;
+            });
+            // render user management & master list
+            adminRenderUsers();
+            adminRenderMaster();
+            adminRenderKeluhan();
+            renderAdminSummary();
+            adminSetupNav();
+            
+            // KITA HAPUS loadDaftarKeluhan() DARI SINI
+        }
+
+        // Fungsi untuk tombol cari mahasiswa (TETAP SAMA)
+        function cariMahasiswa() {
+            const nimCari = document.getElementById('nim-cari').value;
+            const users = JSON.parse(localStorage.getItem('mahasiswa'));
+            
+            const user = users.find(u => u.nim === nimCari && u.role === 'mahasiswa');
+
+            const formInput = document.getElementById('form-input-pelanggaran');
+            const profilBox = document.getElementById('profil-mhs');
+            
+            if (user) {
+                profilBox.innerHTML = `
+                    <strong>Mahasiswa Ditemukan:</strong><br>
+                    Nama: ${user.nama}<br>
+                    NIM: ${user.nim}<br>
+                    Jurusan: ${user.jurusan}
+                `;
+                document.getElementById('nim-terpilih').value = user.nim;
+                formInput.classList.remove('hidden');
+                document.getElementById('admin-error').textContent = '';
+                document.getElementById('admin-success').textContent = '';
+
+                // PANGGILAN BARU
+                loadRiwayatAdmin(user.nim);
+
+            } else {
+                alert('Mahasiswa dengan NIM tersebut tidak ditemukan.');
+                formInput.classList.add('hidden');
+            }
+        }
+
+        // Fungsi untuk memuat riwayat poin (TETAP SAMA)
+        function loadRiwayatAdmin(nim) {
+            const allLogs = JSON.parse(localStorage.getItem('log_pelanggaran'));
+            const masterPelanggaran = JSON.parse(localStorage.getItem('master_pelanggaran'));
+            const container = document.getElementById('riwayat-admin-list');
+            container.innerHTML = ''; // Kosongkan
+
+            const userLogs = allLogs.filter(log => log.nim === nim);
+
+            if (userLogs.length === 0) {
+                container.innerHTML = '<p>Mahasiswa ini belum memiliki poin.</p>';
+                return;
+            }
+
+            userLogs.reverse().forEach(log => {
+                const pelanggaran = masterPelanggaran.find(p => p.id === log.id_pelanggaran);
+                container.innerHTML += `
+                    <div class="riwayat-admin-item">
+                        <div class="info">
+                            <strong>${pelanggaran.nama}</strong> (+${pelanggaran.poin} Poin)
+                            <div class="detail">${log.tanggal} - ${log.keterangan || 'Tidak ada keterangan'}</div>
+                        </div>
+                        <button class="btn-delete" onclick="klikHapusPoin(${log.id_log}, '${nim}')">
+                            Hapus
+                        </button>
+                    </div>
+                `;
+            });
+        }
+
+        // Fungsi klik hapus poin (TETAP SAMA)
+        function klikHapusPoin(log_id, nim) {
+            const sukses = handleDeletePoin(log_id); // Panggil fungsi global
+            if (sukses) {
+                loadRiwayatAdmin(nim); // Muat ulang daftar poin
+            }
+        }
+
+        function adminRenderKeluhan() {
+            const allKeluhan = JSON.parse(localStorage.getItem('log_keluhan') || '[]');
+            const container = document.getElementById('admin-keluhan-list');
+            container.innerHTML = '';
+            if (!allKeluhan.length) { container.innerHTML = '<p>Tidak ada keluhan.</p>'; return; }
+            allKeluhan.slice().reverse().forEach(k => {
+                const el = document.createElement('div'); el.style.padding='12px'; el.style.marginBottom='12px'; el.style.border='1px solid #ddd'; el.style.borderRadius='8px';
+                el.innerHTML = `<div style="display:flex; justify-content:space-between;"><strong>${k.nama} (${k.nim})</strong><small>${k.tanggal}</small></div><div style="margin-top:8px;">${k.keluhan}</div><div style="margin-top:8px;">Status: <strong>${k.status || 'Baru'}</strong></div>`;
+                const actions = document.createElement('div'); actions.style.marginTop='10px'; actions.style.display='flex'; actions.style.gap='8px';
+                const btnReply = document.createElement('button'); btnReply.className='btn btn-compact'; btnReply.textContent='Reply'; btnReply.onclick = () => {
+                    const t = prompt('Tulis balasan untuk mahasiswa:'); if (!t) return; handleReplyKeluhan(k.id_keluhan, t); adminRenderKeluhan();
+                };
+                const btnSet = document.createElement('button'); btnSet.className='btn btn-compact'; btnSet.textContent='Set Status'; btnSet.onclick = () => {
+                    const s = prompt('Masukkan status (Ditanggapi/Selesai/Baru):', k.status || 'Ditanggapi'); if (!s) return; setKeluhanStatus(k.id_keluhan, s); adminRenderKeluhan();
+                };
+                const btnDelete = document.createElement('button'); btnDelete.className='btn-delete btn-compact'; btnDelete.textContent='Hapus'; btnDelete.onclick = () => { if (confirm('Hapus keluhan?')) { handleDeleteKeluhan(k.id_keluhan); adminRenderKeluhan(); } };
+                actions.appendChild(btnReply); actions.appendChild(btnSet); actions.appendChild(btnDelete);
+                el.appendChild(actions); container.appendChild(el);
+            });
+            renderAdminSummary();
+        }
+
+        // -------------------- Admin user & master management UI handlers --------------------
+        function adminRenderUsers() {
+            const cur = getCurrentUser(); if (!cur || cur.role !== 'admin') return;
+            const users = getUsers();
+            const container = document.getElementById('admin-users-table');
+            container.innerHTML = '';
+            if (!users || users.length === 0) { container.innerHTML = '<p>Tidak ada user.</p>'; return; }
+
+            const tbl = document.createElement('table'); tbl.className = 'admin-table';
+            tbl.style.width = '100%';
+            tbl.style.borderCollapse = 'collapse';
+            tbl.innerHTML = '<thead><tr><th>NIM</th><th>Nama</th><th>Role</th><th>Action</th></tr></thead>';
+            const tbody = document.createElement('tbody');
+            users.forEach(u => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td style="padding:8px;border-bottom:1px solid #eee">${u.nim}</td><td style="padding:8px;border-bottom:1px solid #eee">${u.nama}</td><td style="padding:8px;border-bottom:1px solid #eee">${u.role}</td><td style="padding:8px;border-bottom:1px solid #eee"></td>`;
+                const tdAction = tr.querySelector('td:last-child');
+                const btnEdit = document.createElement('button'); btnEdit.className='btn btn-compact'; btnEdit.textContent='Edit'; btnEdit.onclick = () => adminEditUser(u.nim);
+                const btnMsg = document.createElement('button'); btnMsg.className='btn btn-compact'; btnMsg.textContent='Message'; btnMsg.onclick = () => { const t = prompt('Tulis pesan untuk '+u.nama); if (t) { sendMessageToStudent(u.nim, getCurrentUser().nama, t); alert('Pesan terkirim.'); } };
+                const btnDel = document.createElement('button'); btnDel.className='btn-delete btn-compact'; btnDel.textContent='Hapus'; btnDel.onclick = () => { if(confirm('Hapus user '+u.nim+' ?')) { deleteUser(u.nim); adminRenderUsers(); }};
+                tdAction.appendChild(btnEdit); tdAction.appendChild(btnMsg); tdAction.appendChild(btnDel);
+                tbody.appendChild(tr);
+            });
+            tbl.appendChild(tbody);
+            container.appendChild(tbl);
+            renderAdminSummary();
+        }
+
+        function adminAddUser() {
+            const cur = getCurrentUser(); if (!cur || cur.role !== 'admin') return alert('Akses ditolak');
+            const nim = document.getElementById('new-user-nim').value.trim();
+            const nama = document.getElementById('new-user-nama').value.trim();
+            const role = document.getElementById('new-user-role').value;
+            const pass = document.getElementById('new-user-pass').value || '1';
+            if (!nim || !nama) return alert('NIM & Nama wajib diisi');
+            if (addUser({ nim, nama, password: pass, role })) {
+                alert('User ditambahkan');
+                adminRenderUsers();
+                renderAdminSummary();
+                document.getElementById('new-user-nim').value=''; document.getElementById('new-user-nama').value=''; document.getElementById('new-user-pass').value='';
+            } else {
+                alert('User sudah ada');
+            }
+        }
+
+        function adminEditUser(nim) {
+            const cur = getCurrentUser(); if (!cur || cur.role !== 'admin') return alert('Akses ditolak');
+            const users = getUsers(); const u = users.find(x => x.nim === nim);
+            if (!u) return alert('User tidak ditemukan');
+            const newName = prompt('Nama:', u.nama); if (newName === null) return; 
+            const newRole = prompt('Role (mahasiswa/admin):', u.role); if (newRole === null) return;
+            const newPass = prompt('Password (kosongkan jika tidak mau mengubah):', '');
+            if (updateUser(nim, { nama: newName, role: newRole })) { 
+                if (newPass && newPass.trim() !== '') updateUser(nim, { password: newPass });
+                alert('User diperbarui'); adminRenderUsers(); 
+            } else alert('Gagal memperbarui');
+        }
+
+        // master jenis
+        function adminRenderMaster() {
+            const cur = getCurrentUser(); if (!cur || cur.role !== 'admin') return;
+            const jenis = getMasterPelanggaran();
+            const c = document.getElementById('admin-master-table'); c.innerHTML='';
+            if (!jenis || jenis.length === 0) { c.innerHTML = '<p>Tidak ada jenis.</p>'; return; }
+            const tbl = document.createElement('table'); tbl.className = 'admin-table';
+            tbl.innerHTML = '<thead><tr><th>ID</th><th>Jenis</th><th>Poin</th><th>Action</th></tr></thead>';
+            const tbody = document.createElement('tbody');
+            jenis.forEach(j => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td style="padding:8px;border-bottom:1px solid #eee">${j.id}</td><td style="padding:8px;border-bottom:1px solid #eee">${j.nama}</td><td style="padding:8px;border-bottom:1px solid #eee">${j.poin}</td><td style="padding:8px;border-bottom:1px solid #eee"></td>`;
+                const actions = tr.querySelector('td:last-child');
+                const btnEdit = document.createElement('button'); btnEdit.className='btn btn-compact'; btnEdit.textContent='Edit'; btnEdit.onclick = () => {
+                    const n = prompt('Nama jenis', j.nama); if (n === null) return; const p = prompt('Poin', j.poin); if (p === null) return; updateMasterPelanggaran(j.id, { nama: n, poin: Number(p) }); adminRenderMaster();
+                };
+                const btnDel = document.createElement('button'); btnDel.className='btn-delete btn-compact'; btnDel.textContent='Hapus'; btnDel.onclick = () => { if (confirm('Hapus jenis ini?')) { deleteMasterPelanggaran(j.id); adminRenderMaster(); } };
+                actions.appendChild(btnEdit); actions.appendChild(btnDel);
+                tbody.appendChild(tr);
+            }); tbl.appendChild(tbody); c.appendChild(tbl);
+            renderAdminSummary();
+        }
+
+        function adminAddJenis() {
+            const cur = getCurrentUser(); if (!cur || cur.role !== 'admin') return alert('Akses ditolak');
+            const nama = document.getElementById('new-jenis-nama').value.trim();
+            const poin = document.getElementById('new-jenis-poin').value;
+            if (!nama || !poin) return alert('Nama & poin wajib diisi');
+            addMasterPelanggaran({ nama, poin: Number(poin) }); adminRenderMaster(); renderAdminSummary(); document.getElementById('new-jenis-nama').value=''; document.getElementById('new-jenis-poin').value='';
+            // also refresh the dropdown used in the pelanggaran form
+            const sel = document.getElementById('id_pelanggaran'); sel.innerHTML = '<option value="">-- Pilih Jenis Pelanggaran --</option>'; getMasterPelanggaran().forEach(p => sel.innerHTML += `<option value="${p.id}">${p.nama} (+${p.poin} Poin)</option>`);
+        }
+
+        function renderAdminSummary() {
+            const users = getUsers() || [];
+            const keluhan = JSON.parse(localStorage.getItem('log_keluhan') || '[]');
+            const logs = JSON.parse(localStorage.getItem('log_pelanggaran') || '[]');
+            const master = getMasterPelanggaran() || [];
+            const totalUsers = users.length;
+            const totalKeluhan = keluhan.length;
+            const totalPoints = logs.reduce((acc, l) => {
+                const m = master.find(x => x.id === l.id_pelanggaran); return acc + (m ? (m.poin || 0) : 0);
+            }, 0);
+            document.getElementById('stat-users').textContent = totalUsers;
+            document.getElementById('stat-keluhan').textContent = totalKeluhan;
+            document.getElementById('stat-poin').textContent = totalPoints;
+        }
+
+        // Admin Navigation: smooth scrolling & active class
+        function adminSetupNav() {
+            const links = document.querySelectorAll('.sidebar nav a.sidebar-link');
+            const sections = [];
+            links.forEach(a => {
+                const target = a.getAttribute('data-target');
+                if (!target) return;
+                const el = document.querySelector(target);
+                if (el) sections.push({ link: a, el });
+                a.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    document.querySelectorAll('.sidebar nav .sidebar-link').forEach(x=>x.classList.remove('active'));
+                        a.classList.add('active');
+                        document.querySelectorAll('.sidebar nav .sidebar-link').forEach(x => x.removeAttribute('aria-current'));
+                        a.setAttribute('aria-current', 'true');
+                    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+            });
+
+            // highlight on scroll
+            window.addEventListener('scroll', () => {
+                const scrollPos = window.scrollY + 120; // offset to detect header
+                for (let i = sections.length -1; i >= 0; i--) {
+                    const s = sections[i].el;
+                    if (s.offsetTop <= scrollPos) {
+                        document.querySelectorAll('.sidebar nav .sidebar-link').forEach(x=>x.classList.remove('active'));
+                        sections[i].link.classList.add('active');
+                        document.querySelectorAll('.sidebar nav .sidebar-link').forEach(x => x.removeAttribute('aria-current'));
+                        sections[i].link.setAttribute('aria-current', 'true');
+                        break;
+                    }
+                }
+            }, { passive: true });
+            // set initial active based on current scroll position
+            const initEvt = new Event('scroll'); window.dispatchEvent(initEvt);
+        }
+
+        // Fungsi simpan pelanggaran (TETAP SAMA)
+        function simpanPelanggaran() {
+            const nim = document.getElementById('nim-terpilih').value;
+            const id_pelanggaran = parseInt(document.getElementById('id_pelanggaran').value);
+            const tanggal = document.getElementById('tanggal').value;
+            const keterangan = document.getElementById('keterangan').value;
+
+            if (!nim || !id_pelanggaran || !tanggal) {
+                document.getElementById('admin-error').textContent = 'Error: Data tidak lengkap (Jenis Pelanggaran & Tanggal wajib diisi).';
+                return;
+            }
+
+            const allLogs = JSON.parse(localStorage.getItem('log_pelanggaran'));
+            const maxId = allLogs.reduce((max, log) => log.id_log > max ? log.id_log : max, 0);
+            const newLogId = maxId + 1;
+
+            const newLog = {
+                id_log: newLogId,
+                nim: nim,
+                id_pelanggaran: id_pelanggaran,
+                tanggal: tanggal,
+                keterangan: keterangan
+            };
+
+            allLogs.push(newLog);
+            localStorage.setItem('log_pelanggaran', JSON.stringify(allLogs));
+
+            document.getElementById('admin-success').textContent = 'Pelanggaran berhasil disimpan!';
+            document.getElementById('admin-error').textContent = '';
+            document.getElementById('keterangan').value = '';
+            document.getElementById('id_pelanggaran').value = ''; // Reset dropdown
+
+            // Setelah berhasil menyimpan, refresh daftar poin
+            loadRiwayatAdmin(nim);
+        }
+    </script>
+</body>
+<script>
+// Update site-wide inbox badge for students (admin will hide it)
+(function(){
+    const badge = document.getElementById('site-inbox-badge');
+    if (!badge) return;
+    function refresh(){
+        try{
+            const user = getCurrentUser && getCurrentUser();
+            if (!user || user.role !== 'mahasiswa') { badge.style.display = 'none'; return; }
+            if (typeof getUnreadCount === 'function') badge.textContent = getUnreadCount();
+        }catch(e){/* ignore */}
+    }
+    refresh();
+    // optional: refresh periodically
+    setInterval(refresh, 5000);
+    try { if (typeof startInboxWatcher === 'function') startInboxWatcher(5000); } catch(e){}
+})();
+</script>
+</html>
+</body>
+</html>

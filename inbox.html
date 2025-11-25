@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inbox - Mahasiswa</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/6d5d80ba30.js" crossorigin="anonymous"></script>
+</head>
+<body onload="loadInboxPage()">
+    <div class="header" data-aos="fade-down" data-aos-delay="40">
+        <div class="header-left">
+        <img src="logounklab.png" alt="UNKLAB Logo" class="logo">
+        <h3>INFO POINT UNKLAB</h3>
+        </div>
+        <div class="profil">
+            <div style="text-align:right;">
+                <div style="font-size:12px; color:var(--muted); margin-bottom:4px; font-family: 'poppins', sans-serif;">Selamat Datang:</div>
+                <span id="nama-user" style="font-family: 'poppins', sans-serif;">Nama Mahasiswa</span>
+            </div>
+            <span id="site-inbox-badge" style="display:inline-block; margin-left:8px; background:#ff3b30; color:#fff; padding:2px 8px; border-radius:12px; font-size:12px; vertical-align:middle;">0</span>
+            <button class="btn-logout" onclick="handleLogout()">Logout</button>
+        </div>
+    </div>
+
+<div data-aos="fade-right">
+    <div class="dashboard-layout">
+        <div class="sidebar">
+            <h4 style="text-align: center;">Navigasi</h4>
+            <a href="dashboard.html" class="sidebar-link active">Dashboard Point</a>
+            <hr class="sidebar-divider">
+        </div>
+    </div>
+</div>
+
+
+    <div class="container" style="margin-top:20px;" data-aos="fade-up" data-aos-delay="80">
+        <h2>Inbox Pesan</h2>
+        <div style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">
+            <button class="btn" onclick="markAllInboxRead(); loadInbox();">Tandai Semua Terbaca</button>
+            <small style="color:var(--muted);">Pesan dari admin akan muncul di sini.</small>
+        </div>
+        <div id="inbox-list" data-aos="fade-up" data-aos-delay="120"></div>
+    </div>
+</div>
+
+
+    <footer class="footer" data-aos="fade-up" data-aos-delay="120">
+    <div class="footer-content">
+        <div class="footer-section">
+            <h4>INFORMASI</h4>
+            <div class="footer-contact">
+                <p><i class="fa-solid fa-location-dot"></i> Jl. Arnold Mononutu, Airmadidi, Minahasa Utara, Sulawesi Utara, 95371</p>
+                <p><i class="fa-solid fa-phone"></i> +62431 891035</p>
+                <p><i class="fa-solid fa-address-book"></i> info@unklab.ac.id</p>
+            </div>
+        </div>
+        
+        <div class="footer-section">
+            <h4>MEDIA SOSIAL</h4>
+            <div class="footer-social">
+                
+                <a href="https://facebook.com/unklabofficial" class="social-icon">
+                <i class="fa-brands fa-facebook"></i> UNKLAB-Official
+                </a>
+                <a href="https://www.instagram.com/unklabofficial/" class="social-icon">
+                <i class="fa-brands fa-instagram"></i>unklabofficial    
+                </a>
+            </div>
+        </div>
+        
+        <div class="footer-section">
+            <h4>WEBSITE</h4>
+            <div class="footer-social">
+            <a href="https://www.unklab.ac.id/" class="social-icon">
+            <i class="fa-solid fa-link"></i> www.unklab.ac.id
+            </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer-bottom">
+        <p>&copy; 2025 Info Point UNKLAB - Wakil Rektor 3 bidang kemahasiswaan Universitas Klabat</p>
+    </div>
+</footer>
+
+    <script src="app.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+    AOS.init({ once: true, duration: 700, easing: 'ease-out-cubic' });
+    </script>
+    <script>
+        function loadInboxPage() {
+            const user = getCurrentUser();
+            if (!user) {
+                window.location.href = 'index.html';
+                return;
+            }
+            document.getElementById('nama-user').textContent = user.nama;
+            loadInbox();
+        }
+
+        function loadInbox() {
+            const list = getInbox() || [];
+            const container = document.getElementById('inbox-list');
+            container.innerHTML = '';
+            
+            // update badge
+            const badge = document.getElementById('inbox-badge');
+            if (badge && typeof getUnreadCount === 'function') {
+                try { badge.textContent = getUnreadCount(); } catch(e){}
+            }
+
+            if (list.length === 0) {
+                const p = document.createElement('p');
+                p.textContent = 'Tidak ada pesan.';
+                container.appendChild(p);
+                return;
+            }
+
+            // Group pesan by keluhan_id (conversation thread)
+            const conversationMap = {};
+            list.forEach((m, idx) => {
+                const kluId = m.keluhan_id || 'unknown';
+                if (!conversationMap[kluId]) {
+                    conversationMap[kluId] = [];
+                }
+                conversationMap[kluId].push({message: m, originalIndex: idx});
+            });
+
+            // Render setiap conversation thread
+            const conversations = Object.values(conversationMap).sort((a, b) => {
+                const timeA = new Date(a[a.length - 1].message.tanggal);
+                const timeB = new Date(b[b.length - 1].message.tanggal);
+                return timeB - timeA; // terbaru di atas
+            });
+
+            conversations.forEach(thread => {
+                // Main card untuk thread
+                const card = document.createElement('div');
+                card.style.border = '1px solid #ddd';
+                card.style.padding = '15px';
+                card.style.borderRadius = '8px';
+                card.style.marginBottom = '15px';
+                card.style.background = '#fff';
+
+                // Header dengan sender dan tombol
+                const header = document.createElement('div');
+                header.style.display = 'flex';
+                header.style.justifyContent = 'space-between';
+                header.style.alignItems = 'center';
+                header.style.marginBottom = '12px';
+                header.style.paddingBottom = '8px';
+                header.style.borderBottom = '2px solid #eee';
+
+                const titleDiv = document.createElement('div');
+                const titleStrong = document.createElement('strong');
+                titleStrong.textContent = thread[0].message.from;
+                const titleSmall = document.createElement('small');
+                titleSmall.style.color = '#666';
+                titleSmall.style.marginLeft = '8px';
+                titleSmall.textContent = `${thread.length} pesan`;
+                titleDiv.appendChild(titleStrong);
+                titleDiv.appendChild(titleSmall);
+
+                const buttonDiv = document.createElement('div');
+                buttonDiv.style.display = 'flex';
+                buttonDiv.style.gap = '8px';
+
+                // Cek ada unread?
+                const hasUnread = thread.some(item => !item.message.read);
+                if (hasUnread) {
+                    const markBtn = document.createElement('button');
+                    markBtn.className = 'btn';
+                    markBtn.textContent = 'Tandai Terbaca';
+                    markBtn.style.fontSize = '12px';
+                    markBtn.style.padding = '6px 12px';
+                    markBtn.addEventListener('click', function(){
+                        thread.forEach(item => {
+                            markInboxMessageRead(item.originalIndex);
+                        });
+                        loadInbox();
+                    });
+                    buttonDiv.appendChild(markBtn);
+                }
+
+                // Delete all button
+                const delAllBtn = document.createElement('button');
+                delAllBtn.className = 'btn-delete';
+                delAllBtn.textContent = 'Hapus Thread';
+                delAllBtn.style.background = '#dc3545';
+                delAllBtn.style.color = '#fff';
+                delAllBtn.style.border = 'none';
+                delAllBtn.style.padding = '6px 12px';
+                delAllBtn.style.borderRadius = '5px';
+                delAllBtn.style.cursor = 'pointer';
+                delAllBtn.style.fontSize = '12px';
+                delAllBtn.addEventListener('click', function(){
+                    if (confirm('Hapus seluruh thread ini?')) {
+                        thread.forEach(item => {
+                            deleteInboxMessage(item.originalIndex);
+                        });
+                        loadInbox();
+                    }
+                });
+                buttonDiv.appendChild(delAllBtn);
+
+                header.appendChild(titleDiv);
+                header.appendChild(buttonDiv);
+                card.appendChild(header);
+
+                // Chat container
+                const chatContainer = document.createElement('div');
+                chatContainer.style.background = '#fafafa';
+                chatContainer.style.padding = '12px';
+                chatContainer.style.borderRadius = '6px';
+                chatContainer.style.maxHeight = '300px';
+                chatContainer.style.overflowY = 'auto';
+                chatContainer.style.marginBottom = '12px';
+
+                // Render semua pesan dalam thread
+                thread.forEach((item) => {
+                    const m = item.message;
+                    const msgDiv = document.createElement('div');
+                    msgDiv.style.marginBottom = '10px';
+                    msgDiv.style.padding = '10px';
+                    msgDiv.style.background = m.read ? '#fff' : '#e7f3ff';
+                    msgDiv.style.borderRadius = '6px';
+                    msgDiv.style.borderLeft = m.read ? '4px solid #666' : '4px solid #0066cc';
+
+                    const msgHead = document.createElement('div');
+                    msgHead.style.fontSize = '12px';
+                    msgHead.style.color = '#666';
+                    msgHead.style.marginBottom = '4px';
+                    msgHead.textContent = m.tanggal;
+
+                    const msgBody = document.createElement('div');
+                    msgBody.style.whiteSpace = 'pre-wrap';
+                    msgBody.style.wordWrap = 'break-word';
+                    msgBody.style.margin = '6px 0';
+                    msgBody.textContent = m.text;
+
+                    const msgFooter = document.createElement('div');
+                    msgFooter.style.display = 'flex';
+                    msgFooter.style.gap = '8px';
+                    msgFooter.style.marginTop = '8px';
+
+                    const delBtn = document.createElement('button');
+                    delBtn.className = 'btn-delete';
+                    delBtn.textContent = 'Hapus Pesan';
+                    delBtn.style.background = '#6c757d';
+                    delBtn.style.color = '#fff';
+                    delBtn.style.border = 'none';
+                    delBtn.style.padding = '4px 8px';
+                    delBtn.style.borderRadius = '4px';
+                    delBtn.style.cursor = 'pointer';
+                    delBtn.style.fontSize = '11px';
+                    delBtn.addEventListener('click', function(){
+                        if (confirm('Hapus pesan ini?')) {
+                            deleteInboxMessage(item.originalIndex);
+                            loadInbox();
+                        }
+                    });
+                    msgFooter.appendChild(delBtn);
+
+                    msgDiv.appendChild(msgHead);
+                    msgDiv.appendChild(msgBody);
+                    msgDiv.appendChild(msgFooter);
+                    chatContainer.appendChild(msgDiv);
+
+                    // Render balasan mahasiswa jika ada
+                    if (m.replies && m.replies.length > 0) {
+                        m.replies.forEach((reply) => {
+                            const replyDiv = document.createElement('div');
+                            replyDiv.style.marginBottom = '8px';
+                            replyDiv.style.marginLeft = '20px';
+                            replyDiv.style.padding = '10px';
+                            replyDiv.style.background = '#e8f5e9';
+                            replyDiv.style.borderRadius = '6px';
+                            replyDiv.style.borderLeft = '4px solid #4caf50';
+
+                            const replyHead = document.createElement('div');
+                            replyHead.style.fontSize = '12px';
+                            replyHead.style.color = '#666';
+                            replyHead.style.marginBottom = '4px';
+                            replyHead.textContent = `${reply.from} - ${reply.tanggal}`;
+
+                            const replyBody = document.createElement('div');
+                            replyBody.style.whiteSpace = 'pre-wrap';
+                            replyBody.style.wordWrap = 'break-word';
+                            replyBody.style.margin = '6px 0';
+                            replyBody.textContent = reply.text;
+
+                            replyDiv.appendChild(replyHead);
+                            replyDiv.appendChild(replyBody);
+                            chatContainer.appendChild(replyDiv);
+                        });
+                    }
+                });
+
+                card.appendChild(chatContainer);
+
+                // Form reply untuk mahasiswa
+                const replyFormDiv = document.createElement('div');
+                replyFormDiv.style.background = '#fffbf0';
+                replyFormDiv.style.padding = '12px';
+                replyFormDiv.style.borderRadius = '6px';
+                replyFormDiv.style.border = '1px solid #ddd';
+                replyFormDiv.style.marginBottom = '12px';
+
+                const textarea = document.createElement('textarea');
+                textarea.id = `student-reply-${thread[0].message.keluhan_id}`;
+                textarea.placeholder = 'Tulis balasan Anda...';
+                textarea.rows = 2;
+                textarea.style.width = '100%';
+                textarea.style.padding = '8px';
+                textarea.style.boxSizing = 'border-box';
+                textarea.style.border = '1px solid #ccc';
+                textarea.style.borderRadius = '4px';
+                textarea.style.fontFamily = 'inherit';
+
+                const replyButtonDiv = document.createElement('div');
+                replyButtonDiv.style.marginTop = '8px';
+                replyButtonDiv.style.display = 'flex';
+                replyButtonDiv.style.gap = '8px';
+                replyButtonDiv.style.alignItems = 'center';
+
+                const sendBtn = document.createElement('button');
+                sendBtn.className = 'btn';
+                sendBtn.textContent = 'Kirim Balasan';
+                sendBtn.style.fontSize = '13px';
+                sendBtn.style.padding = '8px 16px';
+                sendBtn.addEventListener('click', function() {
+                    const replyText = textarea.value.trim();
+                    if (!replyText) {
+                        alert('Tulis balasan terlebih dahulu');
+                        return;
+                    }
+                    if (typeof handleStudentReplyToInbox === 'function') {
+                        if (handleStudentReplyToInbox(thread[0].message.keluhan_id, replyText)) {
+                            textarea.value = '';
+                            loadInbox();
+                        }
+                    }
+                });
+
+                const hint = document.createElement('small');
+                hint.style.color = 'var(--muted)';
+                hint.textContent = 'Admin akan melihat balasan Anda pada halaman keluhan.';
+
+                replyButtonDiv.appendChild(sendBtn);
+                replyButtonDiv.appendChild(hint);
+
+                replyFormDiv.appendChild(textarea);
+                replyFormDiv.appendChild(replyButtonDiv);
+                card.appendChild(replyFormDiv);
+
+                // Status info
+                const statusDiv = document.createElement('div');
+                statusDiv.style.fontSize = '12px';
+                statusDiv.style.color = '#666';
+                statusDiv.style.paddingTop = '8px';
+                statusDiv.style.borderTop = '1px solid #eee';
+                statusDiv.textContent = `✓ ${thread.filter(t => t.message.read).length}/${thread.length} terbaca`;
+                card.appendChild(statusDiv);
+
+                container.appendChild(card);
+            });
+        }
+    </script>
+    <script>
+    // Start inbox watcher on inbox page as well
+    try { if (typeof startInboxWatcher === 'function') startInboxWatcher(5000); } catch(e){}
+    </script>
+</body>
+</html>

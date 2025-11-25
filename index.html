@@ -1,1 +1,107 @@
-1
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - InfoPointUnklab</title>
+    <meta name="description" content="Portal InfoPoint Unklab - login untuk mengakses dashboard dan layanan mahasiswa.">
+    <meta name="theme-color" content="#0f172a">
+    <!-- Open Graph -->
+    <meta property="og:title" content="InfoPoint Unklab" />
+    <meta property="og:description" content="Masuk untuk mengelola atau melihat informasi kampus." />
+    <meta property="og:type" content="website" />
+    <!-- Minimal favicon (SVG data URI) to avoid 404s -->
+    <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230f172a'/><text x='50' y='58' font-size='50' text-anchor='middle' fill='%23ffffff' font-family='Arial'>I</text></svg>">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <!-- Preload hero/background image to improve perceived load -->
+    <link rel="preload" as="image" href="pioneer_chapel.jpg">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body class="auth">
+    <div class="container" data-aos="fade-up" data-aos-delay="60">
+        <div class="login-box" data-aos="fade-up" data-aos-delay="100">
+            <h2 class="typewriter" style="font-family: 'poppins', sans-serif; font-size: large;">INFO POINT UNKLAB</h2>
+            <p style="font-family: 'Inter', sans-serif; font-size: small;">Silakan login untuk melanjutkan</p>
+            
+            <div class="form-group" data-aos="fade-left" data-aos-delay="140">
+                <label for="nim" style="font-family: 'Inter', sans-serif;">NIM / ID Admin</label>
+                <input type="text" id="nim" placeholder="..." autocomplete="username">
+            </div>
+
+            <div class="form-group" data-aos="fade-right" data-aos-delay="160">
+                <label for="password" style="font-family: 'Inter', sans-serif;">Password</label>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <input type="password" id="password" placeholder="..." autocomplete="current-password" style="flex:1;">
+                </div>
+            </div>
+            
+            <p id="error-message" class="error"></p>
+            
+            <button id="loginButton" class="btn" onclick="handleLogin()" style="font-family: 'poppins', sans-serif; font-size: large;" data-aos="fade-up" data-aos-delay="200">Login</button>
+        </div>
+    </div>
+    
+    <script src="app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+    AOS.init({ once: true, duration: 700, easing: 'ease-out-cubic' });
+    </script>
+    <script>
+    // Password toggle: show/hide password
+    (function(){
+        const pwd = document.getElementById('password');
+        const loginBtn = document.getElementById('loginButton');
+        const errorEl = document.getElementById('error-message');
+
+        // Allow Enter key to submit form when focus is in inputs
+        [document.getElementById('nim'), document.getElementById('password')].forEach(el => {
+            if(!el) return;
+            el.addEventListener('keydown', function(e){
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (typeof handleLogin === 'function') handleLogin();
+                }
+            });
+        });
+
+        // Improve accessibility for error messages
+        if (errorEl) {
+            errorEl.setAttribute('role', 'alert');
+            errorEl.setAttribute('aria-live', 'polite');
+        }
+    })();
+    </script>
+    <script>
+    // Ensure login entrance animation only plays once per session
+    (function(){
+        const key = 'loginAnimationPlayed';
+        const loginBox = document.querySelector('.login-box');
+        if (!loginBox) return;
+        try {
+            const played = sessionStorage.getItem(key) === '1';
+            if (played) {
+                loginBox.classList.add('no-anim');
+                // also disable typewriter animation if you prefer:
+                // const tw = loginBox.querySelector('.typewriter'); if(tw) tw.style.animation = 'none';
+            } else {
+                // add listener to set flag after animation completes
+                function markPlayed(e){
+                    // only mark when our defined animation finishes
+                    if (e && e.animationName && e.animationName !== 'login-entrance') return;
+                    try { sessionStorage.setItem(key, '1'); } catch(e) {}
+                    loginBox.removeEventListener('animationend', markPlayed);
+                }
+                loginBox.addEventListener('animationend', markPlayed);
+            }
+        } catch(e) {}
+    })();
+    </script>
+    <script>
+    // Start inbox watcher site-wide (no-op when not logged-in or not a student)
+    try { if (typeof startInboxWatcher === 'function') startInboxWatcher(5000); } catch(e){}
+    </script>
+</body>
+</html>
